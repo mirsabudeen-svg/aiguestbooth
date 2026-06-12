@@ -108,7 +108,7 @@ def list_messages(
     )
 
 
-@router.get("/audio/{event_id}/{session_id}.wav")
+@router.get("/audio/{event_id}/{session_id}.wav", response_model=None)
 def stream_audio(
     event_id: UUID,
     session_id: UUID,
