@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: booth
+      POSTGRES_PASSWORD: booth
+      POSTGRES_DB: aiguestbooth
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booth -d aiguestbooth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://booth:booth@postgres:5432/aiguestbooth
+      STORAGE_PATH: /app/storage
+      STORAGE_BACKEND: local
+      JWT_SECRET: dev-secret-change-in-production
+      CORS_ORIGINS: http://localhost:3000
+      APP_ENV: development
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://booth:booth@postgres:5432/aiguestbooth
+      STORAGE_PATH: /app/storage
+    volumes:
+      - ./storage:/app/storage
+    command: python -m scripts.run_worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

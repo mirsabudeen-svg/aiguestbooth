@@ -1,0 +1,85 @@
+# Render Blueprint — X- Audio Guest Booth
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: aiguestbooth-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aiguestbooth-db
+          property: connectionString
+      - key: STORAGE_BACKEND
+        value: local
+      - key: STORAGE_PATH
+        value: /app/storage
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: PUBLIC_API_URL
+        sync: false
+      - key: FRONTEND_PUBLIC_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AI_PIPELINE_ENABLED
+        value: "true"
+      - key: FIRMWARE_LATEST_VERSION
+        value: "0.2.0"
+
+  - type: web
+    name: aiguestbooth-dashboard
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: starter
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+
+  - type: worker
+    name: aiguestbooth-worker
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: python -m scripts.run_worker
+    plan: starter
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aiguestbooth-db
+          property: connectionString
+      - key: STORAGE_PATH
+        value: /app/storage
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AI_PIPELINE_ENABLED
+        value: "true"
+
+  - type: cron
+    name: aiguestbooth-retention
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "0 4 * * *"
+    dockerCommand: python -m scripts.purge_retention
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aiguestbooth-db
+          property: connectionString
+      - key: STORAGE_PATH
+        value: /app/storage
+
+databases:
+  - name: aiguestbooth-db
+    plan: basic-256mb
+    databaseName: aiguestbooth
+    user: booth
