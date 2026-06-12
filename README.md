@@ -118,7 +118,7 @@ cd backend && python -m scripts.purge_retention
 
 **OTA:** Build firmware (`pio run`), upload `firmware.bin` via `POST /api/v1/device/firmware/publish` (admin), set `FIRMWARE_LATEST_VERSION`, reboot booths.
 
-**Render deploy:** Open [Blueprint setup](https://dashboard.render.com/blueprint/new?repo=https://github.com/mirsabudeen-svg/aiguestbooth), connect GitHub if prompted, then click **Apply**. After services are created, set these env vars in the Dashboard (marked `sync: false` in `render.yaml`):
+**Render deploy (free, no card):** `render.yaml` uses `plan: free` — API + dashboard + Postgres only (no worker/cron/disk). Open [Blueprint setup](https://dashboard.render.com/blueprint/new?repo=https://github.com/mirsabudeen-svg/aiguestbooth), connect GitHub, click **Apply**. Free tier: services sleep after 15 min idle; Postgres expires after 30 days; uploads are ephemeral (lost on redeploy).
 
 | Service | Variable | Example |
 |---------|----------|---------|
@@ -127,8 +127,6 @@ cd backend && python -m scripts.purge_retention
 | API | `FRONTEND_PUBLIC_URL` | `https://aiguestbooth-dashboard.onrender.com` |
 | API | `OPENAI_API_KEY` | `sk-...` (optional) |
 | Dashboard | `NEXT_PUBLIC_API_URL` | `https://aiguestbooth-api.onrender.com` |
-
-The API uses a persistent disk at `/app/storage` for uploads. For AI worker + retention cron to access the same files, set `STORAGE_BACKEND=s3` and S3 credentials on the worker and cron services (worker ships with `AI_PIPELINE_ENABLED=false` until storage is shared).
 
 ## Documentation
 

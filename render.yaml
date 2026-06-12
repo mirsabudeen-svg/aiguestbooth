@@ -1,20 +1,19 @@
-# Render Blueprint — X-Audio Guest Booth
-# https://render.com/docs/blueprint-spec
+# Render Blueprint — X-Audio Guest Booth (free tier, no payment required)
+# https://render.com/docs/free
+#
+# Free limits: web services spin down after 15 min idle; Postgres expires after 30 days;
+# no workers/cron/disks on free. Uploads use ephemeral disk (lost on redeploy).
 
 services:
   - type: web
     name: aiguestbooth-api
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    plan: starter
+    plan: free
     region: oregon
     branch: master
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     healthCheckPath: /health
-    disk:
-      name: aiguestbooth-storage
-      mountPath: /app/storage
-      sizeGB: 5
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -42,82 +41,19 @@ services:
   - type: web
     name: aiguestbooth-dashboard
     runtime: node
-    rootDir: frontend
-    plan: starter
+    plan: free
     region: oregon
     branch: master
+    rootDir: frontend
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
         sync: false
 
-  - type: worker
-    name: aiguestbooth-worker
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    dockerCommand: python -m scripts.run_worker
-    plan: starter
-    region: oregon
-    branch: master
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: aiguestbooth-db
-          property: connectionString
-      - key: STORAGE_BACKEND
-        sync: false
-      - key: STORAGE_PATH
-        value: /app/storage
-      - key: S3_BUCKET
-        sync: false
-      - key: S3_ENDPOINT
-        sync: false
-      - key: S3_ACCESS_KEY
-        sync: false
-      - key: S3_SECRET_KEY
-        sync: false
-      - key: S3_REGION
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: AI_PIPELINE_ENABLED
-        value: "false"
-
-  - type: cron
-    name: aiguestbooth-retention
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    schedule: "0 4 * * *"
-    dockerCommand: python -m scripts.purge_retention
-    plan: starter
-    region: oregon
-    branch: master
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: aiguestbooth-db
-          property: connectionString
-      - key: STORAGE_BACKEND
-        sync: false
-      - key: STORAGE_PATH
-        value: /app/storage
-      - key: S3_BUCKET
-        sync: false
-      - key: S3_ENDPOINT
-        sync: false
-      - key: S3_ACCESS_KEY
-        sync: false
-      - key: S3_SECRET_KEY
-        sync: false
-      - key: S3_REGION
-        sync: false
-
 databases:
   - name: aiguestbooth-db
-    plan: basic-256mb
+    plan: free
     region: oregon
     databaseName: aiguestbooth
     user: booth
