@@ -1,4 +1,4 @@
-# Render Blueprint — X- Audio Guest Booth
+# Render Blueprint — X-Audio Guest Booth
 # https://render.com/docs/blueprint-spec
 
 services:
@@ -8,7 +8,13 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: starter
+    region: oregon
+    branch: master
     healthCheckPath: /health
+    disk:
+      name: aiguestbooth-storage
+      mountPath: /app/storage
+      sizeGB: 5
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -37,9 +43,11 @@ services:
     name: aiguestbooth-dashboard
     runtime: node
     rootDir: frontend
+    plan: starter
+    region: oregon
+    branch: master
     buildCommand: npm install && npm run build
     startCommand: npm start
-    plan: starter
     envVars:
       - key: NEXT_PUBLIC_API_URL
         sync: false
@@ -51,17 +59,31 @@ services:
     dockerContext: ./backend
     dockerCommand: python -m scripts.run_worker
     plan: starter
+    region: oregon
+    branch: master
     envVars:
       - key: DATABASE_URL
         fromDatabase:
           name: aiguestbooth-db
           property: connectionString
+      - key: STORAGE_BACKEND
+        sync: false
       - key: STORAGE_PATH
         value: /app/storage
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_REGION
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: AI_PIPELINE_ENABLED
-        value: "true"
+        value: "false"
 
   - type: cron
     name: aiguestbooth-retention
@@ -70,16 +92,32 @@ services:
     dockerContext: ./backend
     schedule: "0 4 * * *"
     dockerCommand: python -m scripts.purge_retention
+    plan: starter
+    region: oregon
+    branch: master
     envVars:
       - key: DATABASE_URL
         fromDatabase:
           name: aiguestbooth-db
           property: connectionString
+      - key: STORAGE_BACKEND
+        sync: false
       - key: STORAGE_PATH
         value: /app/storage
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_REGION
+        sync: false
 
 databases:
   - name: aiguestbooth-db
     plan: basic-256mb
+    region: oregon
     databaseName: aiguestbooth
     user: booth
