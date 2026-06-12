@@ -126,7 +126,7 @@ cd backend && python -m scripts.purge_retention
 | API | `PUBLIC_API_URL` | `https://aiguestbooth-api.onrender.com` |
 | API | `FRONTEND_PUBLIC_URL` | `https://aiguestbooth-dashboard.onrender.com` |
 | API | `OPENAI_API_KEY` | `sk-...` (optional) |
-| Dashboard | `NEXT_PUBLIC_API_URL` | `https://aiguestbooth-api.onrender.com` |
+| Dashboard | `NEXT_PUBLIC_API_URL` | `https://aiguestbooth-api.onrender.com/api/v1` |
 
 ## Documentation
 
